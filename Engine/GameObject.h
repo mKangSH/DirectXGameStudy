@@ -32,6 +32,9 @@ public:
 	void SetCheckFrustum(bool checkFrustum) { _checkFrustum = checkFrustum; }
 	bool GetCheckFrustum() { return _checkFrustum; }
 
+	void SetLayerIndex(uint8 layer) { _layerIndex = layer; }
+	uint8 GetLayerIndex() { return _layerIndex; }
+
 private:
 	// 개수 예측 o
 	array<shared_ptr<Component>, FIXED_COMPONENT_COUNT> _components;
@@ -39,5 +42,6 @@ private:
 	vector<shared_ptr<CustomScript>> _scripts;
 
 	bool _checkFrustum = true;
+	uint8 _layerIndex = 0;
 };
 

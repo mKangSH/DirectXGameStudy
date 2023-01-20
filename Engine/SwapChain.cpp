@@ -4,7 +4,6 @@
 void SwapChain::Init(const WindowInfo& window, ComPtr<ID3D12Device> device, ComPtr<IDXGIFactory> dxgi, ComPtr<ID3D12CommandQueue> commandQueue)
 {
 	CreateSwapChain(window, dxgi, commandQueue);
-	CreateRTV(device);
 }
 
 void SwapChain::Present()
@@ -41,30 +40,4 @@ void SwapChain::CreateSwapChain(const WindowInfo& window, ComPtr<IDXGIFactory> d
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	dxgi->CreateSwapChain(commandQueue.Get(), &swapChainDesc, &_swapChain);
-
-	for (int32 i = 0; i < SWAP_CHAIN_BUFFER_COUNT; ++i)
-	{
-		_swapChain->GetBuffer(i, IID_PPV_ARGS(&_rtvBuffer[i]));
-	}
-}
-
-void SwapChain::CreateRTV(ComPtr<ID3D12Device> device)
-{
-	int32 _rtvHeapSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	D3D12_DESCRIPTOR_HEAP_DESC rtvDesc;
-	rtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT;
-	rtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvDesc.NodeMask = 0;
-
-	device->CreateDescriptorHeap(&rtvDesc, IID_PPV_ARGS(&_rtvHeap));
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapBegin = _rtvHeap->GetCPUDescriptorHandleForHeapStart();
-
-	for (int i = 0; i < SWAP_CHAIN_BUFFER_COUNT; ++i)
-	{
-		_rtvHandle[i] = CD3DX12_CPU_DESCRIPTOR_HANDLE(rtvHeapBegin, i * _rtvHeapSize);
-		device->CreateRenderTargetView(_rtvBuffer[i].Get(), nullptr, _rtvHandle[i]);
-	}
 }

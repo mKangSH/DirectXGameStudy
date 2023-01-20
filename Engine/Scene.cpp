@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "ConstantBuffer.h"
 #include "Light.h"
+#include "Resources.h"
 
 void Scene::Awake()
 {
@@ -51,6 +52,39 @@ void Scene::Render()
 {
 	PushLightData();
 
+	// SwapChain Group 초기화
+	int8 backIndex = GEngine->GetSwapChain()->GetBackBufferIndex();
+
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::SWAP_CHAIN)->ClearRenderTargetView(backIndex);
+	// Deferred Group 초기화
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->ClearRenderTargetView();
+	// Lighting Group 초기화
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::LIGHTING)->ClearRenderTargetView();
+	
+	// G_Buffer OMSet
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->OMSetRenderTargets();
+
+	shared_ptr<Camera> mainCamera = _cameras[0];
+	mainCamera->SortGameObject();
+	mainCamera->RenderDeferred();
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->WaitTargetToResource();
+	
+	RenderLights();
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->WaitTargetToResource();
+
+	RenderFinal();
+
+	mainCamera->RenderForward();
+
+	for (auto& camera : _cameras)
+	{
+		if (camera == mainCamera)
+			continue;
+
+		camera->SortGameObject();
+		camera->RenderForward();
+	}
+
 	for (auto& gameObject : _gameObjects)
 	{
 		if (gameObject->GetCamera() == nullptr)
@@ -58,17 +92,76 @@ void Scene::Render()
 			continue;
 		}
 
-		gameObject->GetCamera()->Render();
+		gameObject->GetCamera()->SortGameObject();
+
+		// Deferred OMSet
+		GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->OMSetRenderTargets();
+		gameObject->GetCamera()->RenderDeferred();
+
+		// Light OMSet
+
+		// Swapchain OMSet
+		GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::SWAP_CHAIN)->OMSetRenderTargets(1, backIndex);
+		gameObject->GetCamera()->RenderForward();
 	}
+}
+
+void Scene::RenderLights()
+{
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::LIGHTING)->OMSetRenderTargets();
+
+	for (auto& light : _lights)
+	{
+		light->Render();
+	}
+}
+
+void Scene::RenderFinal()
+{
+	int8 backIndex = GEngine->GetSwapChain()->GetBackBufferIndex();
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::SWAP_CHAIN)->OMSetRenderTargets(1, backIndex);
+
+	GET_SINGLE(Resources)->Get<Material>(L"Final")->PushData();
+	GET_SINGLE(Resources)->Get<Mesh>(L"Rectangle")->Render();
 }
 
 void Scene::AddGameObject(shared_ptr<GameObject> gameObject)
 {
+	if (gameObject->GetCamera() != nullptr)
+	{
+		_cameras.push_back(gameObject->GetCamera());
+	}
+
+	else if (gameObject->GetLight() != nullptr)
+	{
+		_lights.push_back(gameObject->GetLight());
+	}
+
 	_gameObjects.push_back(gameObject);
 }
 
 void Scene::RemoveGameObject(shared_ptr<GameObject> gameObject)
 {
+	if (gameObject->GetCamera())
+	{
+		auto findit = std::find(_cameras.begin(), _cameras.end(), gameObject->GetCamera());
+		
+		if (findit != _cameras.end())
+		{
+			_cameras.erase(findit);
+		}
+	}
+
+	else if (gameObject->GetLight() != nullptr)
+	{
+		auto findit = std::find(_lights.begin(), _lights.end(), gameObject->GetLight());
+		
+		if (findit != _lights.end())
+		{
+			_lights.erase(findit);
+		}
+	}
+
 	auto findit = std::find(_gameObjects.begin(), _gameObjects.end(), gameObject);
 
 	if (findit != _gameObjects.end())
@@ -81,14 +174,12 @@ void Scene::PushLightData()
 {
 	LightParams lightParams = {};
 
-	for (auto& gameObject : _gameObjects)
+	for (auto& light : _lights)
 	{
-		if (gameObject->GetLight() == nullptr)
-		{
-			continue;
-		}
+		const LightInfo& lightInfo = light->GetLightInfo();
 
-		const LightInfo& lightInfo = gameObject->GetLight()->GetLightInfo();
+		light->SetLightIndex(lightParams.lightCount);
+		// TODO
 
 		lightParams.lights[lightParams.lightCount] = lightInfo;
 		lightParams.lightCount++;

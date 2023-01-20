@@ -36,7 +36,7 @@ public:
 	virtual void Update() {}
 	virtual void LateUpdate() {}
 	virtual void FinalUpdate() {}
-
+	
 public:
 	COMPONENT_TYPE GetType() { return _type; }
 	bool IsValid() { return _gameObject.expired() == false; }

@@ -1,7 +1,7 @@
-#ifndef _UTILS_HLSLI_
-#define _UTILS_HLSLI_
+#ifndef _UTILS_FX_
+#define _UTILS_FX_
 
-#include "params.hlsli"
+#include "params.fx"
 
 LightComponents CalculateLightColor(int lightIndex, float3 viewNormal, float3 viewPos)
 {
@@ -83,7 +83,7 @@ LightComponents CalculateLightColor(int lightIndex, float3 viewNormal, float3 vi
     float3 reflectionDir = normalize(viewLightDir + 2 * (saturate(dot(-viewLightDir, viewNormal)) * viewNormal));
     float3 eyeDir = normalize(viewPos);
     specularRatio = saturate(dot(-eyeDir, reflectionDir));
-    specularRatio = pow(specularRatio, 4);
+    specularRatio = pow(specularRatio, 2);
 
     lightModel.diffuse = g_lights[lightIndex].model.diffuse * diffuseRatio * distanceRatio;
     lightModel.ambient = g_lights[lightIndex].model.ambient * distanceRatio;
