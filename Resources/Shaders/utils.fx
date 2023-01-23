@@ -5,13 +5,13 @@
 
 LightComponents CalculateLightColor(int lightIndex, float3 viewNormal, float3 viewPos)
 {
-    LightComponents lightModel = (LightComponents)0.f;
+    LightComponents lightModel = (LightComponents)0.0f;
 
-    float3 viewLightDir = (float3)0.f;
+    float3 viewLightDir = (float3)0.0f;
 
-    float diffuseRatio = 0.f;
-    float specularRatio = 0.f;
-    float distanceRatio = 1.f;
+    float diffuseRatio = 0.0f;
+    float specularRatio = 0.0f;
+    float distanceRatio = 1.0f;
 
     if (g_lights[lightIndex].lightType == 0)
     {
@@ -92,4 +92,8 @@ LightComponents CalculateLightColor(int lightIndex, float3 viewNormal, float3 vi
     return lightModel;
 }
 
+float Rand(float2 co)
+{
+    return 0.5 + (frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453)) * 0.5;
+}
 #endif

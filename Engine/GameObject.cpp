@@ -4,6 +4,7 @@
 #include "MeshRenderer.h"
 #include "Camera.h"
 #include "Light.h"
+#include "ParticleSystem.h"
 #include "CustomScript.h"
 
 GameObject::GameObject() : Object(OBJECT_TYPE::GAMEOBJECT)
@@ -120,6 +121,12 @@ shared_ptr<Light> GameObject::GetLight()
 {
 	shared_ptr<Component> component = GetFixedComponent(COMPONENT_TYPE::LIGHT);
 	return static_pointer_cast<Light>(component);
+}
+
+shared_ptr<ParticleSystem> GameObject::GetParticleSystem()
+{
+	shared_ptr<Component> component = GetFixedComponent(COMPONENT_TYPE::PARTICLE_SYSTEM);
+	return static_pointer_cast<ParticleSystem>(component);
 }
 
 void GameObject::AddComponent(shared_ptr<Component> component)

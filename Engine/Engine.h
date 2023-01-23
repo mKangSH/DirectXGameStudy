@@ -32,13 +32,14 @@ private:
 public:
 	const WindowInfo& GetWindow() { return _window; }
 
-public:
 	// Rendering 관련
 	shared_ptr<Device> GetDevice() { return _device; }
-	shared_ptr<CommandQueue> GetCommandQueue() { return _commandQueue; }
+	shared_ptr<GraphicsCommandQueue> GetGraphicsCmdQueue() { return _graphicsCmdQueue; }
+	shared_ptr<ComputeCommandQueue> GetComputeCmdQueue() { return _computeCmdQueue; }
 	shared_ptr<SwapChain> GetSwapChain() { return _swapChain; }
 	shared_ptr<RootSignature> GetRootSignature() { return _rootSignature; }
-	shared_ptr<TableDescriptorHeap> GetTableDescriptorHeap() { return _tableDescriptorHeap; }
+	shared_ptr<GraphicsDescriptorHeap> GetGraphicsDescriptorHeap() { return _graphicsDescriptorHeap; }
+	shared_ptr<ComputeDescriptorHeap> GetComputeDescriptorHeap() { return _computeDescriptorHeap; }
 
 	shared_ptr<ConstantBuffer> GetConstantBuffer(CONSTANT_BUFFER_TYPE type) { return _constantBuffers[static_cast<uint8>(type)]; }
 	shared_ptr<RenderTargetGroup> GetRTGroup(RENDER_TARGET_GROUP_TYPE type) { return _rtGroups[static_cast<uint8>(type)]; }
@@ -50,10 +51,12 @@ private:
 
 	// Rendering 관련
 	shared_ptr<Device>					_device;
-	shared_ptr<CommandQueue>			_commandQueue;
+	shared_ptr<GraphicsCommandQueue>	_graphicsCmdQueue;
+	shared_ptr<ComputeCommandQueue>		_computeCmdQueue;
 	shared_ptr<SwapChain>				_swapChain;
 	shared_ptr<RootSignature>			_rootSignature;
-	shared_ptr<TableDescriptorHeap>		_tableDescriptorHeap;
+	shared_ptr<GraphicsDescriptorHeap>	_graphicsDescriptorHeap;
+	shared_ptr<ComputeDescriptorHeap>	_computeDescriptorHeap;
 
 	vector<shared_ptr<ConstantBuffer>>	_constantBuffers;
 	array<shared_ptr<RenderTargetGroup>, RENDER_TARGET_GROUP_COUNT> _rtGroups;

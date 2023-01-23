@@ -70,7 +70,7 @@ void Scene::Render()
 	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->WaitTargetToResource();
 	
 	RenderLights();
-	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->WaitTargetToResource();
+	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::LIGHTING)->WaitTargetToResource();
 
 	RenderFinal();
 
@@ -83,26 +83,6 @@ void Scene::Render()
 
 		camera->SortGameObject();
 		camera->RenderForward();
-	}
-
-	for (auto& gameObject : _gameObjects)
-	{
-		if (gameObject->GetCamera() == nullptr)
-		{
-			continue;
-		}
-
-		gameObject->GetCamera()->SortGameObject();
-
-		// Deferred OMSet
-		GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::G_BUFFER)->OMSetRenderTargets();
-		gameObject->GetCamera()->RenderDeferred();
-
-		// Light OMSet
-
-		// Swapchain OMSet
-		GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::SWAP_CHAIN)->OMSetRenderTargets(1, backIndex);
-		gameObject->GetCamera()->RenderForward();
 	}
 }
 
@@ -121,7 +101,7 @@ void Scene::RenderFinal()
 	int8 backIndex = GEngine->GetSwapChain()->GetBackBufferIndex();
 	GEngine->GetRTGroup(RENDER_TARGET_GROUP_TYPE::SWAP_CHAIN)->OMSetRenderTargets(1, backIndex);
 
-	GET_SINGLE(Resources)->Get<Material>(L"Final")->PushData();
+	GET_SINGLE(Resources)->Get<Material>(L"Final")->PushGraphicsData();
 	GET_SINGLE(Resources)->Get<Mesh>(L"Rectangle")->Render();
 }
 
@@ -185,5 +165,5 @@ void Scene::PushLightData()
 		lightParams.lightCount++;
 	}
 
-	CONST_BUFFER(CONSTANT_BUFFER_TYPE::GLOBAL)->SetGlobalData(&lightParams, sizeof(lightParams));
+	CONST_BUFFER(CONSTANT_BUFFER_TYPE::GLOBAL)->SetGraphicsGlobalData(&lightParams, sizeof(lightParams));
 }

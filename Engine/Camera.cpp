@@ -7,7 +7,9 @@
 #include "MeshRenderer.h"
 #include "Engine.h"
 #include "Material.h"
+#include "ParticleSystem.h"
 #include "Shader.h"
+#include "InstancingManager.h"
 
 Matrix Camera::S_MatView;
 Matrix Camera::S_MatProjection;
@@ -39,42 +41,6 @@ void Camera::FinalUpdate()
 
 	_frustum.FinalUpdate();
 }
-
-void Camera::Render()
-{
-	S_MatView = _matView;
-	S_MatProjection = _matProjection;
-
-	shared_ptr<Scene> scene = GET_SINGLE(SceneManager)->GetActiveScene();
-
-	const vector<shared_ptr<GameObject>>& gameObjects = scene->GetGameObjects();
-
-	for (auto& gameObject : gameObjects)
-	{
-		if (gameObject->GetMeshRenderer() == nullptr)
-		{
-			continue;
-		}
-
-		if (IsCulled(gameObject->GetLayerIndex()))
-		{
-			continue;
-		}
-
-		if (gameObject->GetCheckFrustum())
-		{
-			if (_frustum.ContainsSphere(
-				gameObject->GetTransform()->GetWorldPosition(),
-				gameObject->GetTransform()->GetBoundingSphereRadius()) == false)
-			{
-				continue;
-			}
-		}
-
-		gameObject->GetMeshRenderer()->Render();
-	}
-}
-
 void Camera::SortGameObject()
 {
 	shared_ptr<Scene> scene = GET_SINGLE(SceneManager)->GetActiveScene();
@@ -82,10 +48,11 @@ void Camera::SortGameObject()
 	
 	_vecForward.clear();
 	_vecDeferred.clear();
+	_vecParticle.clear();
 
 	for (auto& gameObject : gameObjects)
 	{
-		if (gameObject->GetMeshRenderer() == nullptr)
+		if (gameObject->GetMeshRenderer() == nullptr && gameObject->GetParticleSystem() == nullptr)
 		{
 			continue;
 		}
@@ -105,10 +72,11 @@ void Camera::SortGameObject()
 			}
 		}
 
-		
-		SHADER_TYPE shaderType = gameObject->GetMeshRenderer()->GetMaterial()->GetShader()->GetShaderType();
-		switch (shaderType)
+		if (gameObject->GetMeshRenderer())
 		{
+			SHADER_TYPE shaderType = gameObject->GetMeshRenderer()->GetMaterial()->GetShader()->GetShaderType();
+			switch (shaderType)
+			{
 			case SHADER_TYPE::DEFERRED:
 				_vecDeferred.push_back(gameObject);
 				break;
@@ -116,8 +84,13 @@ void Camera::SortGameObject()
 			case SHADER_TYPE::FORWARD:
 				_vecForward.push_back(gameObject);
 				break;
+			}
 		}
 
+		else
+		{
+			_vecParticle.push_back(gameObject);
+		}
 	}
 }
 
@@ -126,10 +99,7 @@ void Camera::RenderDeferred()
 	S_MatView = _matView;
 	S_MatProjection = _matProjection;
 
-	for (auto& gameObject : _vecDeferred)
-	{
-		gameObject->GetMeshRenderer()->Render();
-	}
+	GET_SINGLE(InstancingManager)->Render(_vecDeferred);
 }
 
 void Camera::RenderForward()
@@ -137,8 +107,10 @@ void Camera::RenderForward()
 	S_MatView = _matView;
 	S_MatProjection = _matProjection;
 
-	for (auto& gameObject : _vecForward)
+	GET_SINGLE(InstancingManager)->Render(_vecForward);
+
+	for (auto& gameObject : _vecParticle)
 	{
-		gameObject->GetMeshRenderer()->Render();
+		gameObject->GetParticleSystem()->Render();
 	}
 }

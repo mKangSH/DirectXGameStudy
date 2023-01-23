@@ -2,6 +2,7 @@
 #include "Mesh.h"
 #include "Engine.h"
 #include "Material.h"
+#include "InstancingBuffer.h"
 
 Mesh::Mesh() : Object(OBJECT_TYPE::MESH)
 {
@@ -19,16 +20,28 @@ void Mesh::Init(const vector<Vertex>& vertexBuffer, const vector<uint32>& indexB
 	CreateIndexBuffer(indexBuffer);
 }
 
-void Mesh::Render()
+void Mesh::Render(uint32 instanceCount)
 {
-	CMD_LIST->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	CMD_LIST->IASetVertexBuffers(0, 1, &_vertexBufferView); // Slot: (0~15)
-	CMD_LIST->IASetIndexBuffer(&_indexBufferView);
+	// GRAPHICS_CMD_LIST->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	GRAPHICS_CMD_LIST->IASetVertexBuffers(0, 1, &_vertexBufferView); // Slot: (0~15)
+	GRAPHICS_CMD_LIST->IASetIndexBuffer(&_indexBufferView);
 
-	GEngine->GetTableDescriptorHeap()->CommitTable();
+	GEngine->GetGraphicsDescriptorHeap()->CommitTable();
 
 	// CMD_LIST->DrawInstanced(_vertexCount, 1, 0, 0);
-	CMD_LIST->DrawIndexedInstanced(_indexCount, 1, 0, 0, 0);
+	GRAPHICS_CMD_LIST->DrawIndexedInstanced(_indexCount, instanceCount, 0, 0, 0);
+}
+
+void Mesh::Render(shared_ptr<InstancingBuffer>& buffer)
+{
+	D3D12_VERTEX_BUFFER_VIEW bufferViews[] = { _vertexBufferView, buffer->GetBufferView() };
+	GRAPHICS_CMD_LIST->IASetVertexBuffers(0, 2, bufferViews); // Slot: (0~15)
+	GRAPHICS_CMD_LIST->IASetIndexBuffer(&_indexBufferView);
+
+	GEngine->GetGraphicsDescriptorHeap()->CommitTable();
+
+	// CMD_LIST->DrawInstanced(_vertexCount, 1, 0, 0);
+	GRAPHICS_CMD_LIST->DrawIndexedInstanced(_indexCount, buffer->GetCount(), 0, 0, 0);
 }
 
 void Mesh::CreateVertexBuffer(const vector<Vertex>& buffer)

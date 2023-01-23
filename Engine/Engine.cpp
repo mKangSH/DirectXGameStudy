@@ -7,6 +7,7 @@
 #include "SceneManager.h"
 #include "Light.h"
 #include "Resources.h"
+#include "InstancingManager.h"
 
 void Engine::Init(const WindowInfo& window)
 {
@@ -17,17 +18,21 @@ void Engine::Init(const WindowInfo& window)
 
 	// Rendering
 	_device = make_shared<Device>();
-	_commandQueue = make_shared<CommandQueue>();
+	_graphicsCmdQueue = make_shared<GraphicsCommandQueue>();
+	_computeCmdQueue = make_shared<ComputeCommandQueue>();
 	_swapChain = make_shared<SwapChain>();
 	_rootSignature = make_shared<RootSignature>();
-	_tableDescriptorHeap = make_shared<TableDescriptorHeap>();
+	_graphicsDescriptorHeap = make_shared<GraphicsDescriptorHeap>();
+	_computeDescriptorHeap = make_shared<ComputeDescriptorHeap>();
 
 	// Rendering
 	_device->Init();
-	_commandQueue->Init(_device->GetDevice(), _swapChain);
-	_swapChain->Init(window, _device->GetDevice(), _device->GetDXGI(), _commandQueue->GetCommandQueue());
+	_graphicsCmdQueue->Init(_device->GetDevice(), _swapChain);
+	_computeCmdQueue->Init(_device->GetDevice());
+	_swapChain->Init(window, _device->GetDevice(), _device->GetDXGI(), _graphicsCmdQueue->GetCommandQueue());
 	_rootSignature->Init();
-	_tableDescriptorHeap->Init(256);
+	_graphicsDescriptorHeap->Init(256);
+	_computeDescriptorHeap->Init();
 	
 	CreateConstantBuffer(CBV_REGISTER::b0, sizeof(LightParams), 1);
 	CreateConstantBuffer(CBV_REGISTER::b1, sizeof(TransformParams), 256);
@@ -38,16 +43,17 @@ void Engine::Init(const WindowInfo& window)
 	// Others
 	ResizeWindow(window.width, window.height);
 
-	INPUT->Init(window.hwnd);
-	TIMER->Init();
+	GET_SINGLE(Input)->Init(window.hwnd);
+	GET_SINGLE(Timer)->Init();
 	GET_SINGLE(Resources)->Init();
 }
 
 void Engine::Update()
 {
-	INPUT->Update();
-	TIMER->Update();
+	GET_SINGLE(Input)->Update();
+	GET_SINGLE(Timer)->Update();
 	GET_SINGLE(SceneManager)->Update();
+	GET_SINGLE(InstancingManager)->ClearBuffer();
 
 	Render();
 
@@ -65,12 +71,12 @@ void Engine::Render()
 
 void Engine::RenderBegin()
 {
-	_commandQueue->RenderBegin(&_viewport, &_scissorRect);
+	_graphicsCmdQueue->RenderBegin(&_viewport, &_scissorRect);
 }
 
 void Engine::RenderEnd()
 {
-	_commandQueue->RenderEnd();
+	_graphicsCmdQueue->RenderEnd();
 }
 
 void Engine::ResizeWindow(int32 width, int32 height)
@@ -85,7 +91,7 @@ void Engine::ResizeWindow(int32 width, int32 height)
 
 void Engine::ShowFps()
 {
-	uint32 fps = TIMER->GetFps();
+	uint32 fps = GET_SINGLE(Timer)->GetFps();
 
 	WCHAR text[100] = L"";
 	::wsprintf(text, L"FPS : %d", fps);

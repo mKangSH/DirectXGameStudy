@@ -17,7 +17,6 @@ public:
 	virtual ~Camera();
 
 	virtual void FinalUpdate() override;
-	void Render();
 
 	void SetProjectionType(PROJECTION_TYPE type) { _type = type; }
 	PROJECTION_TYPE GetProjectionType() { return _type; }
@@ -60,6 +59,7 @@ private:
 private:
 	vector<shared_ptr<GameObject>> _vecDeferred;
 	vector<shared_ptr<GameObject>> _vecForward;
+	vector<shared_ptr<GameObject>> _vecParticle;
 
 public:
 	// TEMP
