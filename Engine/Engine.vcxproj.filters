@@ -25,6 +25,9 @@
     <Filter Include="Object\Resource">
       <UniqueIdentifier>{9450fc12-1824-483f-9d29-6a3bf3e87fb8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Component\Collider">
+      <UniqueIdentifier>{e0565bd7-18b8-4e5f-bc5c-c73779bb8d6e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -128,6 +131,27 @@
     </ClCompile>
     <ClCompile Include="InstancingManager.cpp">
       <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Object\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseCollider.cpp">
+      <Filter>Object\Component\Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereCollider.cpp">
+      <Filter>Object\Component\Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="FBXLoader.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshData.cpp">
+      <Filter>Object\Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Animator.cpp">
+      <Filter>Object\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="TestAnimation.cpp">
+      <Filter>Object\Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,6 +260,27 @@
     <ClInclude Include="InstancingManager.h">
       <Filter>Manager</Filter>
     </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Object\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseCollider.h">
+      <Filter>Object\Component\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="SphereCollider.h">
+      <Filter>Object\Component\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="FBXLoader.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshData.h">
+      <Filter>Object\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Animator.h">
+      <Filter>Object\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="TestAnimation.h">
+      <Filter>Object\Test</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="SimpleMath.inl">
@@ -265,6 +310,21 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\Resources\Shaders\particle.fx">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\shadow.fx">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\tessellation.fx">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\terrain.fx">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\animation.fx">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resources\Shaders\math.fx">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

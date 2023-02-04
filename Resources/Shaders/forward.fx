@@ -67,8 +67,9 @@ float4 PS_Main(VS_OUT input) : SV_Target
 		lightModel.specular += model.specular;
 	}
 
-	color.xyz = (lightModel.diffuse.xyz * color.xyz) + 
-		lightModel.ambient.xyz * color.xyz + lightModel.specular.xyz;
+	color.xyz = (lightModel.diffuse.xyz * color.xyz) 
+		+ lightModel.ambient.xyz * color.xyz 
+		+ lightModel.specular.xyz;
 
 	return color;
 }

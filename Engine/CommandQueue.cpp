@@ -46,7 +46,7 @@ void GraphicsCommandQueue::WaitSync()
 	}
 }
 
-void GraphicsCommandQueue::RenderBegin(const D3D12_VIEWPORT* viewport, const D3D12_RECT* rect)
+void GraphicsCommandQueue::RenderBegin()
 {
 	_commandAllocator->Reset();
 	_commandList->Reset(_commandAllocator.Get(), nullptr);
@@ -70,9 +70,6 @@ void GraphicsCommandQueue::RenderBegin(const D3D12_VIEWPORT* viewport, const D3D
 	_commandList->SetDescriptorHeaps(1, &descHeap);
 
 	_commandList->ResourceBarrier(1, &barrier);
-
-	_commandList->RSSetViewports(1, viewport);
-	_commandList->RSSetScissorRects(1, rect);
 }
 
 void GraphicsCommandQueue::RenderEnd()

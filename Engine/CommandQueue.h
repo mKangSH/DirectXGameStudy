@@ -18,7 +18,7 @@ public:
 	// Fence를 이용하여 이벤트를 발생시키고 CPU GPU 싱크를 맞추는 함수
 	void WaitSync();
 
-	void RenderBegin(const D3D12_VIEWPORT* viewport, const D3D12_RECT* rect);
+	void RenderBegin();
 	void RenderEnd();
 
 	void FlushResourceCommandQueue();

@@ -12,16 +12,26 @@ Shader::~Shader()
 
 }
 
-void Shader::CreateGraphicsShader(const wstring& path, ShaderInfo info, const string& vs, const string& ps, const string& gs)
+void Shader::CreateGraphicsShader(const wstring& path, ShaderInfo info, ShaderArgument arg)
 {
 	_info = info;
 
-	CreateVertexShader(path, vs, "vs_5_0");
-	CreatePixelShader(path, ps, "ps_5_0");
+	CreateVertexShader(path, arg.vs, "vs_5_0");
+	CreatePixelShader(path, arg.ps, "ps_5_0");
 
-	if (gs.empty() == false)
+	if (arg.hs.empty() == false)
 	{
-		CreateGeometryShader(path, gs, "gs_5_0");
+		CreateHullShader(path, arg.hs, "hs_5_0");
+	}
+
+	if (arg.ds.empty() == false)
+	{
+		CreateDomainShader(path, arg.ds, "ds_5_0");
+	}
+
+	if (arg.gs.empty() == false)
+	{
+		CreateGeometryShader(path, arg.gs, "gs_5_0");
 	}
 
 	D3D12_INPUT_ELEMENT_DESC desc[] =
@@ -30,6 +40,8 @@ void Shader::CreateGraphicsShader(const wstring& path, ShaderInfo info, const st
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "WEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "INDICES", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 60, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 
 		// World Matrix
 		{ "W", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0,  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
@@ -48,108 +60,118 @@ void Shader::CreateGraphicsShader(const wstring& path, ShaderInfo info, const st
 		{ "WVP", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 176, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
 	};
 
-	_garaphicsPipelineDesc.InputLayout = { desc, _countof(desc) };
-	_garaphicsPipelineDesc.pRootSignature = GRAPHICS_ROOT_SIGNATURE.Get();
+	_graphicsPipelineDesc.InputLayout = { desc, _countof(desc) };
+	_graphicsPipelineDesc.pRootSignature = GRAPHICS_ROOT_SIGNATURE.Get();
 
-	_garaphicsPipelineDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	_garaphicsPipelineDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	_garaphicsPipelineDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	_garaphicsPipelineDesc.SampleMask = UINT_MAX;
-	_garaphicsPipelineDesc.PrimitiveTopologyType = GetTopologyType(info.topology);
-	_garaphicsPipelineDesc.NumRenderTargets = 1;
-	_garaphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	_garaphicsPipelineDesc.SampleDesc.Count = 1;
-	_garaphicsPipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	_graphicsPipelineDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	_graphicsPipelineDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	_graphicsPipelineDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	_graphicsPipelineDesc.SampleMask = UINT_MAX;
+	_graphicsPipelineDesc.PrimitiveTopologyType = GetTopologyType(info.topology);
+	_graphicsPipelineDesc.NumRenderTargets = 1;
+	_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	_graphicsPipelineDesc.SampleDesc.Count = 1;
+	_graphicsPipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	switch (info.shaderType)
 	{
 		case SHADER_TYPE::DEFERRED:
-			_garaphicsPipelineDesc.NumRenderTargets = RENDER_TARGET_G_BUFFER_GROUP_MEMBER_COUNT;
-			_garaphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			_garaphicsPipelineDesc.RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			_garaphicsPipelineDesc.RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			_graphicsPipelineDesc.NumRenderTargets = RENDER_TARGET_G_BUFFER_GROUP_MEMBER_COUNT;
+			_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			_graphicsPipelineDesc.RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			_graphicsPipelineDesc.RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 
 		case SHADER_TYPE::FORWARD:
-			_garaphicsPipelineDesc.NumRenderTargets = 1;
-			_garaphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			_graphicsPipelineDesc.NumRenderTargets = 1;
+			_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 
 		case SHADER_TYPE::LIGHTING:
-			_garaphicsPipelineDesc.NumRenderTargets = RENDER_TARGET_LIGHTING_GROUP_MEMBER_COUNT;
-			_garaphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-			_garaphicsPipelineDesc.RTVFormats[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			_graphicsPipelineDesc.NumRenderTargets = RENDER_TARGET_LIGHTING_GROUP_MEMBER_COUNT;
+			_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			_graphicsPipelineDesc.RTVFormats[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 
 		case SHADER_TYPE::PARTICLE:
-			_garaphicsPipelineDesc.NumRenderTargets = 1;
-			_garaphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			_graphicsPipelineDesc.NumRenderTargets = 1;
+			_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
+
+		case SHADER_TYPE::COMPUTE:
+			_graphicsPipelineDesc.NumRenderTargets = 0;
+			break;
+
+		case SHADER_TYPE::SHADOW:
+			_graphicsPipelineDesc.NumRenderTargets = 1;
+			_graphicsPipelineDesc.RTVFormats[0] = DXGI_FORMAT_R32_FLOAT;
+			break;
+
 	}
 
 	switch (info.rasterizerType)
 	{
 		case RASTERIZER_TYPE::CULL_BACK:
-			_garaphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-			_garaphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+			_graphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+			_graphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 			break;
 
 		case RASTERIZER_TYPE::CULL_FRONT:
-			_garaphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-			_garaphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
+			_graphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+			_graphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
 			break;
 
 		case RASTERIZER_TYPE::CULL_NONE:
-			_garaphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-			_garaphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+			_graphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+			_graphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 			break;
 
 		case RASTERIZER_TYPE::WIREFRAME:
-			_garaphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-			_garaphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+			_graphicsPipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+			_graphicsPipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 			break;
 	}
 
 	switch (info.depthStencilType)
 	{
 		case DEPTH_STENCIL_TYPE::LESS:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 			break;
 
 		case DEPTH_STENCIL_TYPE::LESS_EQUAL:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 			break;
 
 		case DEPTH_STENCIL_TYPE::GREATER:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 			break;
 
 		case DEPTH_STENCIL_TYPE::GREATER_EQUAL:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
 			break;
 
 		case DEPTH_STENCIL_TYPE::NO_DEPTH_TEST:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = FALSE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = FALSE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 			break;
 
 		case DEPTH_STENCIL_TYPE::NO_DEPTH_TEST_NO_WRITE:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = FALSE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = FALSE;
+			_graphicsPipelineDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 			break;
 
 		case DEPTH_STENCIL_TYPE::LESS_NO_WRITE:
-			_garaphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
-			_garaphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-			_garaphicsPipelineDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+			_graphicsPipelineDesc.DepthStencilState.DepthEnable = TRUE;
+			_graphicsPipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+			_graphicsPipelineDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 			break;
 	}
 
-	D3D12_RENDER_TARGET_BLEND_DESC& rtBlendState = _garaphicsPipelineDesc.BlendState.RenderTarget[0];
+	D3D12_RENDER_TARGET_BLEND_DESC& rtBlendState = _graphicsPipelineDesc.BlendState.RenderTarget[0];
 
 	// SrcBlend = Pixel Shader
 	// DestBlend = Render Target
@@ -177,7 +199,7 @@ void Shader::CreateGraphicsShader(const wstring& path, ShaderInfo info, const st
 			break;
 	}
 
-	DEVICE->CreateGraphicsPipelineState(&_garaphicsPipelineDesc, IID_PPV_ARGS(&_pipelineState));
+	DEVICE->CreateGraphicsPipelineState(&_graphicsPipelineDesc, IID_PPV_ARGS(&_pipelineState));
 }
 
 void Shader::CreateComputeShader(const wstring& path, const string& name, const string& version)
@@ -277,15 +299,25 @@ void Shader::CreateShader(const wstring& path, const string& name, const string&
 
 void Shader::CreateVertexShader(const wstring& path, const string& name, const string& version)
 {
-	CreateShader(path, name, version, _vsBlob, _garaphicsPipelineDesc.VS);
+	CreateShader(path, name, version, _vsBlob, _graphicsPipelineDesc.VS);
 }
 
-void Shader::CreatePixelShader(const wstring& path, const string& name, const string& version)
+void Shader::CreateHullShader(const wstring& path, const string& name, const string& version)
 {
-	CreateShader(path, name, version, _psBlob, _garaphicsPipelineDesc.PS);
+	CreateShader(path, name, version, _hsBlob, _graphicsPipelineDesc.HS);
+}
+
+void Shader::CreateDomainShader(const wstring& path, const string& name, const string& version)
+{
+	CreateShader(path, name, version, _dsBlob, _graphicsPipelineDesc.DS);
 }
 
 void Shader::CreateGeometryShader(const wstring& path, const string& name, const string& version)
 {
-	CreateShader(path, name, version, _gsBlob, _garaphicsPipelineDesc.GS);
+	CreateShader(path, name, version, _gsBlob, _graphicsPipelineDesc.GS);
+}
+
+void Shader::CreatePixelShader(const wstring& path, const string& name, const string& version)
+{
+	CreateShader(path, name, version, _psBlob, _graphicsPipelineDesc.PS);
 }

@@ -8,6 +8,7 @@ enum class SHADER_TYPE : uint8
 	LIGHTING,
 	PARTICLE,
 	COMPUTE,
+	SHADOW,
 };
 
 enum class RASTERIZER_TYPE : uint8
@@ -48,13 +49,22 @@ struct ShaderInfo
 	// D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 };
 
+struct ShaderArgument
+{
+	const string vs = "VS_Main";
+	const string hs;
+	const string ds;
+	const string gs;
+	const string ps = "PS_Main";
+};
+
 class Shader : public Object
 {
 public:
 	Shader();
 	virtual ~Shader();
 
-	void CreateGraphicsShader(const wstring& path, ShaderInfo info = ShaderInfo(), const string& vs = "VS_Main", const string& ps = "PS_Main", const string& gs = "");
+	void CreateGraphicsShader(const wstring& path, ShaderInfo info = ShaderInfo(), ShaderArgument arg = ShaderArgument());
 	void CreateComputeShader(const wstring& path, const string& name, const string& version);
 
 	void Update();
@@ -66,8 +76,10 @@ public:
 private:
 	void CreateShader(const wstring& path, const string& name, const string& version, ComPtr<ID3DBlob>& blob, D3D12_SHADER_BYTECODE& shaderByteCode);
 	void CreateVertexShader(const wstring& path, const string& name, const string& version);
-	void CreatePixelShader(const wstring& path, const string& name, const string& version);
+	void CreateHullShader(const wstring& path, const string& name, const string& version);
+	void CreateDomainShader(const wstring& path, const string& name, const string& version);
 	void CreateGeometryShader(const wstring& path, const string& name, const string& version);
+	void CreatePixelShader(const wstring& path, const string& name, const string& version);
 
 private:
 	ShaderInfo _info;
@@ -75,10 +87,12 @@ private:
 
 	// GraphicsShader
 	ComPtr<ID3DBlob>					_vsBlob;
-	ComPtr<ID3DBlob>					_psBlob;
+	ComPtr<ID3DBlob>					_hsBlob;
+	ComPtr<ID3DBlob>					_dsBlob;
 	ComPtr<ID3DBlob>					_gsBlob;
+	ComPtr<ID3DBlob>					_psBlob;
 	ComPtr<ID3DBlob>					_errBlob;
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC  _garaphicsPipelineDesc = {};
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC  _graphicsPipelineDesc = {};
 
 	// TODO : 별도의 클래스로 분리
 	// ComputeShader

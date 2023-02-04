@@ -35,6 +35,8 @@ using namespace Microsoft::WRL;
 #include <DirectXTex/DirectXTex.inl>
 #include "SimpleMath.h"
 
+#include <fbxsdk.h>
+
 // lib
 #pragma comment(lib, "d3d12")
 #pragma comment(lib, "dxgi")
@@ -46,6 +48,18 @@ using namespace Microsoft::WRL;
 #else
 #pragma comment(lib, "DirectXTex\\DirectXTex.lib")
 #endif
+
+#ifdef _DEBUG
+#pragma comment(lib, "FBX\\debug\\libfbxsdk-md.lib")
+#pragma comment(lib, "FBX\\debug\\libxml2-md.lib")
+#pragma comment(lib, "FBX\\debug\\zlib-md.lib")
+#else
+#pragma comment(lib, "FBX\\release\\libfbxsdk-md.lib")
+#pragma comment(lib, "FBX\\release\\libxml2-md.lib")
+#pragma comment(lib, "FBX\\release\\zlib-md.lib")
+#endif
+
+// TODO : ASIMP lib 추가해보기
 
 // typedef
 using int8		= __int8;
@@ -131,6 +145,8 @@ struct Vertex
 	Vec2 uv;
 	Vec3 normal;
 	Vec3 tangent;
+	Vec4 weights;
+	Vec4 indices;
 };
 
 struct TransformParams
@@ -140,6 +156,14 @@ struct TransformParams
 	Matrix matProjection;
 	Matrix matWV;
 	Matrix matWVP;
+	Matrix matViewInv;
+};
+
+struct AnimFrameParams
+{
+	Vec4 scale;
+	Vec4 rotation;
+	Vec4 translation;
 };
 
 #define DECLARE_SINGLE(type)					\
@@ -174,4 +198,7 @@ private:										\
 #define CONST_BUFFER(type)	GEngine->GetConstantBuffer(type)
 
 extern unique_ptr<class Engine> GEngine;
+
 void GlobalEngineInit();
+wstring s2ws(const string& s);
+string ws2s(const wstring& s);
