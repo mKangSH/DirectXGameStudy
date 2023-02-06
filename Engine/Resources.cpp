@@ -687,8 +687,8 @@ void Resources::CreateDefaultMaterial()
 	// Terrain
 	{
 		shared_ptr<Shader> shader = GET_SINGLE(Resources)->Get<Shader>(L"Terrain");
-		shared_ptr<Texture> texture = GET_SINGLE(Resources)->Load<Texture>(L"Terrain", L"..\\Resources\\Textures\\Terrain\\grass_autumn_red_d.jpg");
-		shared_ptr<Texture> normalTexture = GET_SINGLE(Resources)->Load<Texture>(L"Terrain_Normal", L"..\\Resources\\Textures\\Terrain\\grass_autumn_n.jpg");
+		shared_ptr<Texture> texture = GET_SINGLE(Resources)->Load<Texture>(L"Terrain", L"..\\Resources\\Textures\\Terrain\\grass_ground_d.jpg");
+		shared_ptr<Texture> normalTexture = GET_SINGLE(Resources)->Load<Texture>(L"Terrain_Normal", L"..\\Resources\\Textures\\Terrain\\grass_ground_n.jpg");
 		shared_ptr<Material> material = make_shared<Material>();
 		material->SetShader(shader);
 		material->SetTexture(0, texture);
